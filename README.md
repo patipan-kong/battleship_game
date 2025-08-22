@@ -1,9 +1,10 @@
 # Battleship Game Online
 A multiplayer Battleship Board game built with Colyseus and Phaser
 
-## ✅ COMPLETED IMPLEMENTATION
+## Play Demo 
+- https://battleship-game-serv.onrender.com/
 
-I have successfully created a complete multiplayer Battleship game based on your specifications! Here's what has been implemented:
+## ✅ COMPLETED IMPLEMENTATION
 
 ### 🌟 Features Implemented
 - **✅ Waiting Lobby**: Can create room or join existing room
