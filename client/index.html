@@ -441,7 +441,14 @@
     <!-- Use specific CDN versions that work well in browsers -->
     <script src="https://cdn.jsdelivr.net/npm/colyseus.js@0.15.20/dist/colyseus.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
-    
+    <script>
+        // window.serverUrl = `${window.location.protocol}//${window.location.hostname}:3000`;
+        // Use the same host as the current page, but port 3000 for WebSocket
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.hostname;
+        // const wsUrl = `${protocol}//${host}:3000`;
+        window.serverUrl = `https://battleship-game-serv.onrender.com`;
+    </script>
     <!-- Game Scripts -->
     <script src="js/GameClient.js"></script>
     <script src="js/scenes/GameScene.js"></script>
@@ -646,8 +653,7 @@
                 const roomsList = document.getElementById('roomsList');
                 roomsList.innerHTML = '<div class="loading-rooms">🔄 Loading rooms...</div>';
                 
-                // Use dynamic server URL
-                const serverUrl = `${window.location.protocol}//${window.location.hostname}:3000`;
+                // Use dynamic server URL                
                 const response = await fetch(`${serverUrl}/api/rooms`);
                 const rooms = await response.json();
                 

@@ -1,11 +1,7 @@
 class GameClient {
     constructor() {
         // Create global game client instance
-        // Use the same host as the current page, but port 3000 for WebSocket
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const host = window.location.hostname;
-        // const wsUrl = `${protocol}//${host}:3000`;
-        const wsUrl = `https://battleship-game-serv.onrender.com`;
+        const wsUrl = window.serverUrl;
         
         console.log('Connecting to Colyseus server at:', wsUrl);
         this.client = new Colyseus.Client(wsUrl);
