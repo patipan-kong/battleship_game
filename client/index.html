@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battleship Game Online</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            font-family: 'Arial', sans-serif;
+            color: white;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .ui-panel {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            padding: 20px;
+            pointer-events: auto;
+        }
+
+        #lobbyPanel {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            min-width: 400px;
+        }
+
+        #gameInfoPanel {
+            top: 20px;
+            left: 20px;
+            min-width: 300px;
+        }
+
+        #tutorialPanel {
+            top: 50%;
+            right: 20px;
+            transform: translateY(-50%);
+            max-width: 300px;
+            display: none;
+        }
+
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 10px 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background: #45a049;
+        }
+
+        .btn:disabled {
+            background: #666666;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .btn:disabled:hover {
+            background: #666666;
+        }
+
+        .btn-secondary {
+            background: #2196F3;
+        }
+
+        .btn-secondary:hover {
+            background: #1976D2;
+        }
+
+        .btn-danger {
+            background: #f44336;
+        }
+
+        .btn-danger:hover {
+            background: #da190b;
+        }
+
+        input[type="text"], input[type="password"] {
+            padding: 10px;
+            margin: 10px 5px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            width: 200px;
+        }
+
+        .room-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .room-item {
+            background: rgba(255, 255, 255, 0.1);
+            margin: 8px 0;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .room-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: #4CAF50;
+            transform: translateY(-2px);
+        }
+
+        .room-info {
+            flex-grow: 1;
+        }
+
+        .room-title {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .room-details {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .room-status {
+            background: #4CAF50;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .room-status.full {
+            background: #f44336;
+        }
+
+        .room-status.private {
+            background: #ff9800;
+        }
+
+        .loading-rooms {
+            text-align: center;
+            padding: 20px;
+            opacity: 0.7;
+            font-style: italic;
+        }
+
+        .no-rooms {
+            text-align: center;
+            padding: 20px;
+            opacity: 0.7;
+            color: #ffeb3b;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        #shipPanel {
+            bottom: 20px;
+            left: 20px;
+            width: 150px;
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+        }
+
+        .ship-item {
+            background: #555;
+            border: 2px solid #777;
+            border-radius: 5px;
+            padding: 5px;
+            cursor: grab;
+            transition: all 0.3s;
+        }
+
+        .ship-item:hover {
+            border-color: #4CAF50;
+        }
+
+        .ship-item.placed {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .ship-segment {
+            width: 20px;
+            height: 20px;
+            background: #4CAF50;
+            border: 1px solid #333;
+            margin: 1px;
+            display: inline-block;
+        }
+
+        #status {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            #lobbyPanel {
+                min-width: 300px;
+                max-width: 90vw;
+            }
+            
+            #gameInfoPanel {
+                min-width: 250px;
+            }
+            
+            input[type="text"], input[type="password"] {
+                width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer"></div>
+    
+    <div id="ui">
+        <!-- Lobby Panel -->
+        <div id="lobbyPanel" class="ui-panel">
+            <h1>🚢 Battleship Game Online</h1>
+            <div id="playerNameSection">
+                <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+                <br>
+                <button class="btn" onclick="setPlayerName()">Set Name</button>
+            </div>
+            
+            <div id="roomSelection" class="hidden">
+                <h3>🎮 Battleship Lobby</h3>
+                
+                <!-- Available Rooms Section -->
+                <div id="availableRoomsSection">
+                    <h4>🌐 Available Rooms</h4>
+                    <div id="roomsList" class="room-list">
+                        <div class="loading-rooms">Loading rooms...</div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="refreshRooms()">🔄 Refresh Rooms</button>
+                </div>
+
+                <hr style="margin: 20px 0; border-color: rgba(255,255,255,0.3);">
+                
+                <!-- Create Room Section -->
+                <div id="createRoomSection">
+                    <h4>🏗️ Create New Room</h4>
+                    <div id="roomConfigSection">
+                        <div style="margin: 10px 0;">
+                            <label style="display: block; margin-bottom: 5px;">🎯 Number of Ships:</label>
+                            <select id="shipCount" style="padding: 8px; border-radius: 4px; border: none; width: 100px;">
+                                <option value="3">3 Ships</option>
+                                <option value="4" selected>4 Ships</option>
+                                <option value="5">5 Ships</option>
+                                <option value="6">6 Ships</option>
+                            </select>
+                        </div>
+                        <div style="margin: 10px 0;">
+                            <label style="display: block; margin-bottom: 5px;">📐 Board Size:</label>
+                            <select id="boardSize" style="padding: 8px; border-radius: 4px; border: none; width: 100px;">
+                                <option value="10">10x10</option>
+                                <option value="12">12x12</option>
+                                <option value="14" selected>14x14</option>
+                                <option value="16">16x16</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn" onclick="createRoom(false)">Create Public Room</button>
+                    <button class="btn btn-secondary" onclick="showCreatePrivateRoom()">Create Private Room</button>
+                </div>
+
+                <hr style="margin: 20px 0; border-color: rgba(255,255,255,0.3);">
+                
+                <!-- Manual Join Section -->
+                <div id="manualJoinSection">
+                    <h4>🔐 Join with Room ID</h4>
+                    <button class="btn btn-secondary" onclick="showJoinRoom()">Join by Room ID</button>
+                    <button class="btn btn-secondary" onclick="showTutorial()">❓ How to Play</button>
+                </div>
+                
+                <div id="createPrivateRoom" class="hidden">
+                    <h4>Create Private Room</h4>
+                    <div style="margin: 10px 0;">
+                        <label style="display: block; margin-bottom: 5px;">🎯 Number of Ships:</label>
+                        <select id="privateShipCount" style="padding: 8px; border-radius: 4px; border: none; width: 100px;">
+                            <option value="3">3 Ships</option>
+                            <option value="4" selected>4 Ships</option>
+                            <option value="5">5 Ships</option>
+                            <option value="6">6 Ships</option>
+                        </select>
+                    </div>
+                    <div style="margin: 10px 0;">
+                        <label style="display: block; margin-bottom: 5px;">📐 Board Size:</label>
+                        <select id="privateBoardSize" style="padding: 8px; border-radius: 4px; border: none; width: 100px;">
+                            <option value="10">10x10</option>
+                            <option value="12">12x12</option>
+                            <option value="14" selected>14x14</option>
+                            <option value="16">16x16</option>
+                        </select>
+                    </div>
+                    <input type="password" id="privatePasscode" placeholder="4-digit passcode" maxlength="4">
+                    <br>
+                    <button class="btn" onclick="createRoom(true)">Create</button>
+                    <button class="btn btn-danger" onclick="hideCreatePrivateRoom()">Cancel</button>
+                </div>
+                
+                <div id="joinRoom" class="hidden">
+                    <h4>Join Room Manually</h4>
+                    <input type="text" id="roomId" placeholder="Room ID">
+                    <input type="password" id="joinPasscode" placeholder="Passcode (if private)">
+                    <br>
+                    <button class="btn" onclick="joinRoom()">Join</button>
+                    <button class="btn btn-danger" onclick="hideJoinRoom()">Cancel</button>
+                </div>
+            </div>
+            
+            <div id="waitingRoom" class="hidden">
+                <h3>Waiting for Players...</h3>
+                <p>Room ID: <span id="currentRoomId"></span></p>
+                <p id="roomPasscode" class="hidden">Passcode: <span id="currentPasscode"></span></p>
+                <p id="roomConfig">🎯 Ships: <span id="roomShipCount">4</span> | 📐 Board: <span id="roomBoardSize">14</span>x<span id="roomBoardSizeRepeat">14</span></p>
+                <p>Players: <span id="playerCount">1</span>/2</p>
+                <button class="btn btn-danger" onclick="leaveRoom()">Leave Room</button>
+            </div>
+        </div>
+
+        <!-- Game Info Panel -->
+        <div id="gameInfoPanel" class="ui-panel hidden">
+            <div id="status">Waiting for game to start...</div>
+            <div id="playerInfo">
+                <div>You: <span id="yourName"></span></div>
+                <div>Opponent: <span id="opponentName">Waiting...</span></div>
+            </div>
+            <div id="gameStats">
+                <div>Phase: <span id="gamePhase">Setup</span></div>
+                <div>Turn: <span id="currentTurn">-</span></div>
+                <div>Ships Remaining: <span id="shipsRemaining">4</span></div>
+            </div>
+            <button id="readyBtn" class="btn hidden" onclick="playerReady()">Ready!</button>
+            <button class="btn btn-danger" onclick="leaveRoom()">Leave Game</button>
+        </div>
+
+        <!-- Ship Panel for Setup Phase -->
+        <div id="shipPanel" class="ui-panel hidden">
+            <div style="margin-bottom: 15px;">
+                <button id="autoPlaceBtn" class="btn btn-secondary" onclick="autoPlaceShips()">🎲 Auto-Place Ships</button>
+                <button id="clearShipsBtn" class="btn" onclick="clearShips()" style="background: #ff9800;">🗑️ Clear All</button>
+            </div>
+            <div id="shipsContainer"></div>
+        </div>
+
+        <!-- Tutorial Panel -->
+        <div id="tutorialPanel" class="ui-panel">
+            <h3>🎯 How to Play</h3>
+            <div style="max-height: 400px; overflow-y: auto;">
+                <h4>Game Setup:</h4>
+                <ul>
+                    <li>Choose ship count (3-6) and board size (10x10 to 16x16)</li>
+                    <li>Create or join a room with your preferred settings</li>
+                    <li>Wait for 2 players</li>
+                    <li>Place all ships on your board</li>
+                    <li>Use 🎲 Auto-Place for quick setup</li>
+                    <li>Click Ready when done</li>
+                </ul>
+                
+                <h4>Gameplay:</h4>
+                <ul>
+                    <li>Take turns shooting at opponent's board</li>
+                    <li>Click on unexplored squares</li>
+                    <li>🔥 = Hit, 💨 = Miss</li>
+                    <li>Destroy all enemy ships to win!</li>
+                </ul>
+                
+                <h4>Ships:</h4>
+                <ul>
+                    <li>1x Carrier (5 squares)</li>
+                    <li>1x Battleship (4 squares)</li>
+                    <li>2x Cruiser (3 squares)</li>
+                    <li>2x Destroyer (2 squares)</li>
+                </ul>
+                
+                <h4>Controls:</h4>
+                <ul>
+                    <li><strong>Manual:</strong> Drag ships to place them</li>
+                    <li><strong>Rotate:</strong> Right-click ships</li>
+                    <li><strong>Auto-Place:</strong> 🎲 Random placement</li>
+                    <li><strong>Clear:</strong> 🗑️ Remove all ships</li>
+                    <li><strong>Shoot:</strong> Click opponent squares</li>
+                </ul>
+                
+                <h4>Ships (4 total):</h4>
+                <ul>
+                    <li>🚢 Carrier (5 squares)</li>
+                    <li>🚢 Battleship (4 squares)</li>
+                    <li>🚢 Cruiser (3 squares)</li>
+                    <li>🚢 Destroyer (2 squares)</li>
+                </ul>
+            </div>
+            <button class="btn" onclick="hideTutorial()">Close</button>
+        </div>
+    </div>
+
+    <!-- Include Libraries -->
+    <!-- Use specific CDN versions that work well in browsers -->
+    <script src="https://cdn.jsdelivr.net/npm/colyseus.js@0.15.20/dist/colyseus.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+    
+    <!-- Game Scripts -->
+    <script src="js/GameClient.js"></script>
+    <script>
+        // Create global game client instance
+        // Use the same host as the current page, but port 3000 for WebSocket
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const host = window.location.hostname;
+        const wsUrl = `${protocol}//${host}:3000`;
+
+        window.gameClient = new GameClient(wsUrl);
+    </script>
+    <script src="js/scenes/GameScene.js"></script>
+    <script src="js/main.js"></script>
+    
+    <script>
+        // UI Helper Functions
+        function setPlayerName() {
+            const name = document.getElementById('playerName').value.trim();
+            if (name.length < 2) {
+                alert('Please enter a name with at least 2 characters');
+                return;
+            }
+            
+            document.getElementById('playerNameSection').classList.add('hidden');
+            document.getElementById('roomSelection').classList.remove('hidden');
+            document.getElementById('yourName').textContent = name;
+            
+            // Store name for game client
+            window.playerName = name;
+            
+            // Automatically load available rooms
+            loadPublicRooms();
+            
+            // Set up auto-refresh every 5 seconds
+            if (window.roomRefreshInterval) {
+                clearInterval(window.roomRefreshInterval);
+            }
+            window.roomRefreshInterval = setInterval(loadPublicRooms, 5000);
+        }
+
+        function showCreatePrivateRoom() {
+            document.getElementById('createPrivateRoom').classList.remove('hidden');
+            document.getElementById('joinRoom').classList.add('hidden');
+        }
+
+        function hideCreatePrivateRoom() {
+            document.getElementById('createPrivateRoom').classList.add('hidden');
+        }
+
+        function showJoinRoom() {
+            document.getElementById('joinRoom').classList.remove('hidden');
+            document.getElementById('createPrivateRoom').classList.add('hidden');
+            loadPublicRooms();
+        }
+
+        function hideJoinRoom() {
+            document.getElementById('joinRoom').classList.add('hidden');
+        }
+
+        function showTutorial() {
+            document.getElementById('tutorialPanel').style.display = 'block';
+        }
+
+        function hideTutorial() {
+            document.getElementById('tutorialPanel').style.display = 'none';
+        }
+
+        function createRoom(isPrivate) {
+            const passcode = isPrivate ? document.getElementById('privatePasscode').value : '';
+            
+            // Get room configuration
+            const shipCountElement = isPrivate ? 
+                document.getElementById('privateShipCount') : 
+                document.getElementById('shipCount');
+            const boardSizeElement = isPrivate ? 
+                document.getElementById('privateBoardSize') : 
+                document.getElementById('boardSize');
+                
+            const shipCount = parseInt(shipCountElement.value);
+            const boardSize = parseInt(boardSizeElement.value);
+            console.log('Creating room with config:', {
+                isPrivate,
+                passcode,
+                shipCount,
+                boardSize
+            });
+            
+            if (isPrivate && passcode.length !== 4) {
+                alert('Please enter a 4-digit passcode');
+                return;
+            }
+            window.gameClient.createRoom(isPrivate, passcode, { shipCount, boardSize });
+        }
+
+        function joinRoom() {
+            const roomId = document.getElementById('roomId').value.trim();
+            const passcode = document.getElementById('joinPasscode').value;
+            
+            if (!roomId) {
+                alert('Please enter a Room ID');
+                return;
+            }
+            
+            window.gameClient.joinRoom(roomId, passcode);
+        }
+
+        function joinPublicRoom(roomId) {
+            window.gameClient.joinRoom(roomId, '');
+        }
+
+        function leaveRoom() {
+            window.gameClient.leaveRoom();
+            showLobby();
+        }
+
+        function playerReady() {
+            window.gameClient.playerReady();
+        }
+
+        function autoPlaceShips() {
+            if (window.gameClient) {
+                window.gameClient.autoPlaceShips();
+            }
+        }
+
+        function clearShips() {
+            if (window.gameClient) {
+                window.gameClient.clearShips();
+            }
+        }
+
+        function showLobby() {
+            document.getElementById('lobbyPanel').classList.remove('hidden');
+            document.getElementById('gameInfoPanel').classList.add('hidden');
+            document.getElementById('shipPanel').classList.add('hidden');
+            document.getElementById('waitingRoom').classList.add('hidden');
+            document.getElementById('roomSelection').classList.remove('hidden');
+            
+            // Restart room loading when returning to lobby
+            loadPublicRooms();
+            if (window.roomRefreshInterval) {
+                clearInterval(window.roomRefreshInterval);
+            }
+            window.roomRefreshInterval = setInterval(loadPublicRooms, 5000);
+        }
+
+        function showWaitingRoom(roomId, isPrivate, passcode) {
+            // Clear room refresh interval when joining a room
+            if (window.roomRefreshInterval) {
+                clearInterval(window.roomRefreshInterval);
+            }
+            
+            document.getElementById('lobbyPanel').classList.remove('hidden');
+            document.getElementById('roomSelection').classList.add('hidden');
+            document.getElementById('waitingRoom').classList.remove('hidden');
+            
+            document.getElementById('currentRoomId').textContent = roomId;
+            
+            if (isPrivate) {
+                document.getElementById('roomPasscode').classList.remove('hidden');
+                document.getElementById('currentPasscode').textContent = passcode;
+            }
+        }
+
+        function showGameInterface() {
+            document.getElementById('lobbyPanel').classList.add('hidden');
+            document.getElementById('gameInfoPanel').classList.remove('hidden');
+        }
+
+        function updatePlayerCount(count) {
+            document.getElementById('playerCount').textContent = count;
+        }
+
+        function updateRoomConfig(shipCount, boardSize) {
+            console.log('Updating room config:', { shipCount, boardSize });
+            document.getElementById('roomShipCount').textContent = shipCount;
+            document.getElementById('roomBoardSize').textContent = boardSize;
+            document.getElementById('roomBoardSizeRepeat').textContent = boardSize;
+        }
+
+        function updateGameStatus(status) {
+            document.getElementById('status').textContent = status;
+        }
+
+        function updateGamePhase(phase) {
+            document.getElementById('gamePhase').textContent = phase;
+            
+            if (phase === 'Setup') {
+                document.getElementById('shipPanel').classList.remove('hidden');
+                document.getElementById('readyBtn').classList.remove('hidden');
+            } else {
+                document.getElementById('shipPanel').classList.add('hidden');
+                document.getElementById('readyBtn').classList.add('hidden');
+            }
+        }
+
+        function updateCurrentTurn(playerName) {
+            document.getElementById('currentTurn').textContent = playerName;
+        }
+
+        function updateShipsRemaining(count) {
+            document.getElementById('shipsRemaining').textContent = count;
+        }
+
+        function updateOpponentName(name) {
+            document.getElementById('opponentName').textContent = name;
+        }
+
+        async function loadPublicRooms() {
+            try {
+                const roomsList = document.getElementById('roomsList');
+                roomsList.innerHTML = '<div class="loading-rooms">🔄 Loading rooms...</div>';
+                
+                // Use dynamic server URL
+                const serverUrl = `${window.location.protocol}//${window.location.hostname}:3000`;
+                const response = await fetch(`${serverUrl}/api/rooms`);
+                const rooms = await response.json();
+                
+                roomsList.innerHTML = '';
+                
+                if (rooms.length === 0) {
+                    roomsList.innerHTML = '<div class="no-rooms">🏠 No rooms available<br><small>Create a new room to start playing!</small></div>';
+                } else {
+                    rooms.forEach(room => {
+                        const roomDiv = document.createElement('div');
+                        roomDiv.className = 'room-item';
+                        
+                        // Debug logging
+                        console.log('🔍 Room metadata:', room.metadata);
+                        console.log('🔍 ShipCount:', room.metadata?.shipCount, 'BoardSize:', room.metadata?.boardSize);
+                        
+                        const isPrivate = room.metadata && room.metadata.isPrivate;
+                        const isFull = room.clients >= room.maxClients;
+                        
+                        let statusClass = 'room-status';
+                        let statusText = `${room.clients}/${room.maxClients}`;
+                        
+                        if (isFull) {
+                            statusClass += ' full';
+                            statusText = 'Full';
+                        } else if (isPrivate) {
+                            statusClass += ' private';
+                            statusText = 'Private';
+                        }
+                        
+                        roomDiv.innerHTML = `
+                            <div class="room-info">
+                                <div class="room-title">🚢 Room ${room.roomId}</div>
+                                <div class="room-details">
+                                    ${isPrivate ? '🔐 Private Room' : '🌐 Public Room'}<br>
+                                    <small>🎯 Ships: ${room.metadata?.shipCount ?? 'N/A'} | 📐 Board: ${room.metadata?.boardSize ?? 'N/A'}x${room.metadata?.boardSize ?? 'N/A'}</small>
+                                </div>
+                            </div>
+                            <div class="room-status ${statusClass.includes('full') ? 'full' : (statusClass.includes('private') ? 'private' : '')}">${statusText}</div>
+                        `;
+                        
+                        if (!isFull && !isPrivate) {
+                            roomDiv.onclick = () => joinPublicRoom(room.roomId);
+                        } else {
+                            roomDiv.style.cursor = 'not-allowed';
+                            roomDiv.style.opacity = '0.6';
+                        }
+                        
+                        roomsList.appendChild(roomDiv);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load public rooms:', error);
+                const roomsList = document.getElementById('roomsList');
+                roomsList.innerHTML = '<div class="no-rooms">❌ Failed to load rooms<br><small>Check server connection</small></div>';
+            }
+        }
+
+        // Add refresh function
+        function refreshRooms() {
+            loadPublicRooms();
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            // Hide tutorial by default
+            hideTutorial();
+        });
+    </script>
+</body>
+</html>
