@@ -1,7 +1,7 @@
 class GameClient {
     constructor() {
         // Create global game client instance
-        const wsUrl = window.serverUrl;
+        const wsUrl = window.wsUrl || window.serverUrl;
         
         console.log('Connecting to Colyseus server at:', wsUrl);
         this.client = new Colyseus.Client(wsUrl);

@@ -44,11 +44,12 @@ app.get('/api/rooms', async (req, res) => {
             if (roomInfo.roomName === 'battleship') {
                 const metadata = roomInfo.metadata || {};
                 const isPublic = !metadata.isPrivate;
+                const hasPlayers = roomInfo.clients > 0; // Don't show empty rooms
                 const isJoinable = !metadata.locked && roomInfo.clients < roomInfo.maxClients;
                 
-                console.log(`  → isPublic: ${isPublic}, isJoinable: ${isJoinable}`);
+                console.log(`  → isPublic: ${isPublic}, hasPlayers: ${hasPlayers}, isJoinable: ${isJoinable}`);
                 
-                if (isPublic && isJoinable) {
+                if (isPublic && hasPlayers && isJoinable) {
                     availableRooms.push({
                         roomId: roomId,
                         clients: roomInfo.clients,
@@ -58,7 +59,9 @@ app.get('/api/rooms', async (req, res) => {
                             maxPlayers: metadata.maxPlayers || roomInfo.maxClients,
                             phase: metadata.phase || 'waiting',
                             locked: metadata.locked || false,
-                            isPrivate: metadata.isPrivate || false
+                            isPrivate: metadata.isPrivate || false,
+                            shipCount: metadata.shipCount || 4,
+                            boardSize: metadata.boardSize || 14
                         },
                         createdAt: roomInfo.createdAt
                     });

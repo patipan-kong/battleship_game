@@ -442,12 +442,23 @@
     <script src="https://cdn.jsdelivr.net/npm/colyseus.js@0.15.20/dist/colyseus.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
     <script>
-        // window.serverUrl = `${window.location.protocol}//${window.location.hostname}:3000`;
-        // Use the same host as the current page, but port 3000 for WebSocket
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const host = window.location.hostname;
-        // const wsUrl = `${protocol}//${host}:3000`;
-        window.serverUrl = `https://battleship-game-serv.onrender.com`;
+        // Determine if we're in local development or production
+        const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        
+        if (isLocalDev) {
+            // Local development
+            window.serverUrl = `${window.location.protocol}//${window.location.hostname}:3000`;
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const host = window.location.hostname;
+            window.wsUrl = `${protocol}//${host}:3000`;
+        } else {
+            // Production
+            window.serverUrl = `https://battleship-game-serv.onrender.com`;
+            window.wsUrl = `wss://battleship-game-serv.onrender.com`;
+        }
+        
+        console.log('Server URL:', window.serverUrl);
+        console.log('WebSocket URL:', window.wsUrl);
     </script>
     <!-- Game Scripts -->
     <script src="js/GameClient.js"></script>
@@ -469,6 +480,11 @@
             
             // Store name for game client
             window.playerName = name;
+            
+            // Initialize game client if not already done
+            if (!window.gameClient) {
+                window.gameClient = new GameClient();
+            }
             
             // Automatically load available rooms
             loadPublicRooms();

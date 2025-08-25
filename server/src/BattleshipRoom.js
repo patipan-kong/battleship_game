@@ -191,22 +191,13 @@ class BattleshipRoom extends Room {
 
         // Reset game state if no players left
         if (this.state.players.length === 0) {
-            this.state.phase = "waiting";
-            this.setMetadata({
-                isPrivate: this.state.isPrivate,
-                playerCount: 0,
-                maxPlayers: this.maxClients,
-                phase: "waiting",
-                locked: false
-            });
+            console.log(`Room ${this.roomId} is now empty, disposing...`);
             
-            // Update registry
-            if (global.updateRoom) {
-                global.updateRoom(this.roomId, {
-                    clients: 0,
-                    metadata: this.metadata
-                });
-            }
+            // Use the proper Colyseus method to dispose the room
+            // This will trigger onDispose automatically
+            setTimeout(() => {
+                this.disconnect();
+            }, 1000);
         }
     }
 
